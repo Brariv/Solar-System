@@ -12,12 +12,12 @@ pub struct Vertex {
 }
 
 impl Vertex {
-  pub fn new(position: Vec3, normal: Vec3, tex_coords: Vec2) -> Self {
+  pub fn new(position: Vec3, normal: Vec3, tex_coords: Vec2, color: Color) -> Self {
     Vertex {
       position,
       normal,
       tex_coords,
-      color: Color::new(35, 31, 33), // Default to white
+      color,
       transformed_position: position,
       transformed_normal: normal,
     }

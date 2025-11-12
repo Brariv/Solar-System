@@ -23,7 +23,14 @@ pub fn line(a: &Vertex, b: &Vertex) -> Vec<Fragment> {
 
     loop {
         let z = start.z + (end.z - start.z) * (x0 - start.x as i32) as f32 / (end.x - start.x) as f32;
-        fragments.push(Fragment::new(x0 as f32, y0 as f32, Color::new(255, 255, 255), z));
+        fragments.push(Fragment::new(
+            x0 as f32,
+            y0 as f32,
+            Color::new(255, 255, 255),
+            z,
+            nalgebra_glm::vec3(0.0, 0.0, 0.0),
+            nalgebra_glm::vec3(0.0, 0.0, 0.0),
+        ));
 
         if x0 == x1 && y0 == y1 { break; }
 

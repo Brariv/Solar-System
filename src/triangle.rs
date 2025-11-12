@@ -1,4 +1,5 @@
 use nalgebra_glm::{Vec3, dot};
+use raylib::color;
 use crate::fragment::Fragment;
 use crate::vertex::Vertex;
 use crate::line::line;
@@ -15,7 +16,7 @@ pub fn _triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
   fragments
 }
 
-pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
+pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex, color: Color) -> Vec<Fragment> {
   let mut fragments = Vec::new();
   let (a, b, c) = (v1.transformed_position, v2.transformed_position, v3.transformed_position);
 
@@ -38,8 +39,7 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
          w2 >= 0.0 && w2 <= 1.0 &&
          w3 >= 0.0 && w3 <= 1.0 {
         // Interpolate normal
-        // let normal = v1.transformed_normal * w1 + v2.transformed_normal * w2 + v3.transformed_normal * w3;
-        let normal = v1.transformed_normal;
+        let normal = v1.transformed_normal * w1 + v2.transformed_normal * w2 + v3.transformed_normal * w3;
         let normal = normal.normalize();
 
         // Calculate lighting intensity
@@ -48,14 +48,16 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
 
         // Create a gray color and apply lighting
         //let base_color = Color::new(100, 100, 100); // Medium gray
-        let base_color = Color::new(181, 220, 185); // Medium gray
+        let base_color = color;
         let lit_color = base_color * intensity;
 
         // Interpolate depth
-        // let depth = a.z * w1 + b.z * w2 + c.z * w3;
-        let depth = a.z;
+        let depth = a.z * w1 + b.z * w2 + c.z * w3;
 
-        fragments.push(Fragment::new(x as f32, y as f32, lit_color, depth));
+        // Interpolate world position
+        let world_pos = v1.position * w1 + v2.position * w2 + v3.position * w3;
+
+        fragments.push(Fragment::new(x as f32, y as f32, lit_color, depth, world_pos, normal));
       }
     }
   }

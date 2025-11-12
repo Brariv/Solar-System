@@ -53,7 +53,7 @@ impl Obj {
                     .cloned()
                     .unwrap_or(Vec2::new(0.0, 0.0));
 
-                vertices.push(Vertex::new(position, normal, tex_coords));
+                vertices.push(Vertex::new(position, normal, tex_coords, crate::color::Color::new(35, 31, 33)));
             }
         }
 

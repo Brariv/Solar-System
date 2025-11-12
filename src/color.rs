@@ -1,10 +1,12 @@
 use std::fmt;
+use nalgebra_glm::Vec3;
+use nalgebra_glm::Vec4;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
-  r: u8,
-  g: u8,
-  b: u8,
+  pub r: u8,
+  pub g: u8,
+  pub b: u8,
 }
 
 impl Color {
@@ -26,6 +28,28 @@ impl Color {
       b: (b.clamp(0.0, 1.0) * 255.0) as u8,
     }
   }
+
+  pub fn from_vec3(v: Vec3) -> Self {
+        let r = (v.x.clamp(0.0, 1.0) * 255.0) as u8;
+        let g = (v.y.clamp(0.0, 1.0) * 255.0) as u8;
+        let b = (v.z.clamp(0.0, 1.0) * 255.0) as u8;
+        Self { r, g, b }
+    }
+
+  pub fn from_vec4(v: Vec4) -> Self {
+    // Apply alpha (v.w) by compositing the RGB over black:
+    // result_rgb = src_rgb * alpha
+    let a = v.w.clamp(0.0, 1.0);
+    let r = (v.x.clamp(0.0, 1.0) * a * 255.0) as u8;
+    let g = (v.y.clamp(0.0, 1.0) * a * 255.0) as u8;
+    let b = (v.z.clamp(0.0, 1.0) * a * 255.0) as u8;
+    Self { r, g, b }
+  }
+
+    /// Converts a Color (0–255 range) to a Vec3 (0.0–1.0 range)
+    pub fn to_vec3(&self) -> Vec3 {
+        Vec3::new(self.r as f32 / 255.0, self.g as f32 / 255.0, self.b as f32 / 255.0)
+    }
 
   // Function to create a color from a hex value
   pub fn from_hex(hex: u32) -> Self {
