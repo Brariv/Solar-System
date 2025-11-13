@@ -1,89 +1,74 @@
-use nalgebra_glm::{Vec3, dot};
-use raylib::color;
-use crate::fragment::Fragment;
+use raylib::prelude::{Vector2, Vector3};
+
 use crate::vertex::Vertex;
-use crate::line::line;
-use crate::color::Color;
+use crate::fragment::Fragment;
+use crate::light::Light;
 
-pub fn _triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
-  let mut fragments = Vec::new();
+// Simple CPU triangle rasterizer that interpolates vertex.color
+pub fn triangle(v0: &Vertex, v1: &Vertex, v2: &Vertex, _light: &Light) -> Vec<Fragment> {
+    let mut fragments = Vec::new();
 
-  // Draw the three sides of the triangle
-  fragments.extend(line(v1, v2));
-  fragments.extend(line(v2, v3));
-  fragments.extend(line(v3, v1));
+    // Use transformed_position as screen-space
+    let p0 = v0.transformed_position;
+    let p1 = v1.transformed_position;
+    let p2 = v2.transformed_position;
 
-  fragments
-}
+    // Bounding box
+    let min_x = p0.x.min(p1.x).min(p2.x).floor() as i32;
+    let max_x = p0.x.max(p1.x).max(p2.x).ceil() as i32;
+    let min_y = p0.y.min(p1.y).min(p2.y).floor() as i32;
+    let max_y = p0.y.max(p1.y).max(p2.y).ceil() as i32;
 
-pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex, color: Color) -> Vec<Fragment> {
-  let mut fragments = Vec::new();
-  let (a, b, c) = (v1.transformed_position, v2.transformed_position, v3.transformed_position);
-
-  let (min_x, min_y, max_x, max_y) = calculate_bounding_box(&a, &b, &c);
-
-  let light_dir = Vec3::new(0.0, 0.0, -1.0);
-
-  let triangle_area = edge_function(&a, &b, &c);
-
-  // Iterate over each pixel in the bounding box
-  for y in min_y..=max_y {
-    for x in min_x..=max_x {
-      let point = Vec3::new(x as f32 + 0.5, y as f32 + 0.5, 0.0);
-
-      // Calculate barycentric coordinates
-      let (w1, w2, w3) = barycentric_coordinates(&point, &a, &b, &c, triangle_area);
-
-      // Check if the point is inside the triangle
-      if w1 >= 0.0 && w1 <= 1.0 && 
-         w2 >= 0.0 && w2 <= 1.0 &&
-         w3 >= 0.0 && w3 <= 1.0 {
-        // Interpolate normal
-        let normal = v1.transformed_normal * w1 + v2.transformed_normal * w2 + v3.transformed_normal * w3;
-        let normal = normal.normalize();
-
-        // Calculate lighting intensity
-        let intensity = dot(&normal, &light_dir).max(0.0);
-        let intensity = intensity * 0.5 + 0.3; // Ambient term
-
-        // Create a gray color and apply lighting
-        //let base_color = Color::new(100, 100, 100); // Medium gray
-        let base_color = color;
-        let lit_color = base_color * intensity;
-
-        // Interpolate depth
-        let depth = a.z * w1 + b.z * w2 + c.z * w3;
-
-        // Interpolate world position
-        let world_pos = v1.position * w1 + v2.position * w2 + v3.position * w3;
-
-        fragments.push(Fragment::new(x as f32, y as f32, lit_color, depth, world_pos, normal));
-      }
+    // Helper for barycentric coordinates
+    fn edge(a: Vector3, b: Vector3, c: Vector3) -> f32 {
+        (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
     }
-  }
 
-  fragments
+    let area = edge(p0, p1, p2);
+    if area == 0.0 {
+        return fragments; // Degenerate triangle
+    }
+
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let px = x as f32 + 0.5;
+            let py = y as f32 + 0.5;
+            let p = Vector3::new(px, py, 0.0);
+
+            let w0 = edge(p1, p2, p);
+            let w1 = edge(p2, p0, p);
+            let w2 = edge(p0, p1, p);
+
+            // Same sign as area => inside triangle
+            if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0 && area > 0.0)
+                || (w0 <= 0.0 && w1 <= 0.0 && w2 <= 0.0 && area < 0.0)
+            {
+                let w0n = w0 / area;
+                let w1n = w1 / area;
+                let w2n = w2 / area;
+
+                // Interpolate depth
+                let depth = w0n * p0.z + w1n * p1.z + w2n * p2.z;
+
+                // Interpolate color from vertex colors (set in planetshaders)
+                let c0 = v0.color;
+                let c1 = v1.color;
+                let c2 = v2.color;
+
+                let color = Vector3::new(
+                    c0.x * w0n + c1.x * w1n + c2.x * w2n,
+                    c0.y * w0n + c1.y * w1n + c2.y * w2n,
+                    c0.z * w0n + c1.z * w1n + c2.z * w2n,
+                );
+
+                fragments.push(Fragment {
+                    position: Vector2::new(px, py),
+                    color,
+                    depth,
+                });
+            }
+        }
+    }
+
+    fragments
 }
-
-fn calculate_bounding_box(v1: &Vec3, v2: &Vec3, v3: &Vec3) -> (i32, i32, i32, i32) {
-    let min_x = v1.x.min(v2.x).min(v3.x).floor() as i32;
-    let min_y = v1.y.min(v2.y).min(v3.y).floor() as i32;
-    let max_x = v1.x.max(v2.x).max(v3.x).ceil() as i32;
-    let max_y = v1.y.max(v2.y).max(v3.y).ceil() as i32;
-
-    (min_x, min_y, max_x, max_y)
-}
-
-fn barycentric_coordinates(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3, area: f32) -> (f32, f32, f32) {
-    let w1 = edge_function(b, c, p) / area;
-    let w2 = edge_function(c, a, p) / area;
-    let w3 = edge_function(a, b, p) / area;
-
-    (w1, w2, w3)
-}
-
-fn edge_function(a: &Vec3, b: &Vec3, c: &Vec3) -> f32 {
-    (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
-}
-
-

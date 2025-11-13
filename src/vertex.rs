@@ -1,40 +1,41 @@
-use nalgebra_glm::{Vec2, Vec3};
-use crate::color::Color;
+#![allow(dead_code)]
+
+use raylib::math::{Vector2, Vector3};
 
 #[derive(Clone, Debug)]
 pub struct Vertex {
-  pub position: Vec3,
-  pub normal: Vec3,
-  pub tex_coords: Vec2,
-  pub color: Color,
-  pub transformed_position: Vec3,
-  pub transformed_normal: Vec3,
+  pub position: Vector3,
+  pub normal: Vector3,
+  pub tex_coords: Vector2,
+  pub color: Vector3,
+  pub transformed_position: Vector3,
+  pub transformed_normal: Vector3,
 }
 
 impl Vertex {
-  pub fn new(position: Vec3, normal: Vec3, tex_coords: Vec2, color: Color) -> Self {
+  pub fn new(position: Vector3, normal: Vector3, tex_coords: Vector2) -> Self {
     Vertex {
       position,
       normal,
       tex_coords,
-      color,
+      color: Vector3::new(0.0, 0.0, 0.0), // Black
       transformed_position: position,
       transformed_normal: normal,
     }
   }
 
-  pub fn new_with_color(position: Vec3, color: Color) -> Self {
+  pub fn new_with_color(position: Vector3, color: Vector3) -> Self {
     Vertex {
       position,
-      normal: Vec3::new(0.0, 0.0, 0.0),
-      tex_coords: Vec2::new(0.0, 0.0),
+      normal: Vector3::new(0.0, 0.0, 0.0),
+      tex_coords: Vector2::new(0.0, 0.0),
       color,
-      transformed_position: Vec3::new(0.0, 0.0, 0.0),
-      transformed_normal: Vec3::new(0.0, 0.0, 0.0),
+      transformed_position: Vector3::new(0.0, 0.0, 0.0),
+      transformed_normal: Vector3::new(0.0, 0.0, 0.0),
     }
   }
 
-  pub fn set_transformed(&mut self, position: Vec3, normal: Vec3) {
+  pub fn set_transformed(&mut self, position: Vector3, normal: Vector3) {
     self.transformed_position = position;
     self.transformed_normal = normal;
   }
@@ -43,12 +44,12 @@ impl Vertex {
 impl Default for Vertex {
   fn default() -> Self {
     Vertex {
-      position: Vec3::new(0.0, 0.0, 0.0),
-      normal: Vec3::new(0.0, 1.0, 0.0),
-      tex_coords: Vec2::new(0.0, 0.0),
-      color: Color::new(35, 31, 33),
-      transformed_position: Vec3::new(0.0, 0.0, 0.0),
-      transformed_normal: Vec3::new(0.0, 1.0, 0.0),
+      position: Vector3::new(0.0, 0.0, 0.0),
+      normal: Vector3::new(0.0, 1.0, 0.0),
+      tex_coords: Vector2::new(0.0, 0.0),
+      color: Vector3::new(0.0, 0.0, 0.0), // Black
+      transformed_position: Vector3::new(0.0, 0.0, 0.0),
+      transformed_normal: Vector3::new(0.0, 1.0, 0.0),
     }
   }
 }

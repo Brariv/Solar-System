@@ -1,93 +1,158 @@
-use nalgebra_glm as glm;
-use glm::{Vec3, Mat4};
-use minifb::{Window, MouseMode, MouseButton, Key};
+#![allow(dead_code)]
+
+use raylib::prelude::*;
+use crate::matrix::create_view_matrix;
+use std::f32::consts::PI;
 
 pub struct Camera {
-    yaw: f32,
-    pitch: f32,
-    dist: f32,
-    mouse_sense: f32,
-    pitch_limit: f32,
-    last_mouse: Option<(f32,f32)>,
-    pub dist_min: f32,
-    pub dist_max: f32,
+    // Camera position/orientation
+    pub eye: Vector3,        // Camera position
+    pub target: Vector3,     // Point the camera is looking at
+    pub up: Vector3,         // Up vector
+
+    // Orbit camera parameters
+    pub yaw: f32,            // Rotation around Y axis (left/right)
+    pub pitch: f32,          // Rotation around X axis (up/down)
+    pub distance: f32,       // Distance from target
+
+    // Movement speed
+    pub rotation_speed: f32,
+    pub zoom_speed: f32,
+    pub pan_speed: f32,
 }
 
 impl Camera {
-    pub fn new(initial_dist: f32) -> Self {
-        Self {
-            yaw: 0.0,
-            pitch: 0.0,
-            dist: initial_dist,
-            mouse_sense: 0.008,
-            pitch_limit: 1.3,
-            last_mouse: None,
-            dist_min: 200.0,
-            dist_max: 5000.0,
-        }
-    }
-
-    #[inline] pub fn set_distance(&mut self, d: f32) {
-        self.dist = d.clamp(self.dist_min, self.dist_max);
-    }
-
-    /// Frame a body of given radius (rough heuristic)
-    #[inline] pub fn frame_radius(&mut self, radius: f32) {
-        self.set_distance(radius * 3.8);
-        self.last_mouse = None; // avoid jump
-    }
-
-    /// Update yaw/pitch (mouse-drag) and zoom (A/S keys)
-    pub fn update_input(&mut self, window: &Window) {
-        // Mouse drag → orbit camera
-        if let Some((mx,my)) = window.get_mouse_pos(MouseMode::Clamp) {
-            if window.get_mouse_down(MouseButton::Left) {
-                if let Some((px,py)) = self.last_mouse {
-                    let dx = mx - px;
-                    let dy = my - py;
-                    self.yaw   += dx * self.mouse_sense;
-                    self.pitch += dy * self.mouse_sense;
-                    self.pitch = self.pitch.clamp(-self.pitch_limit, self.pitch_limit);
-                }
-                self.last_mouse = Some((mx,my));
-            } else {
-                self.last_mouse = Some((mx,my));
-            }
-        }
-
-        // Camera zoom on A/S
-        if window.is_key_down(Key::S) { self.dist *= 0.98; }
-        if window.is_key_down(Key::A) { self.dist *= 1.02; }
-        self.dist = self.dist.clamp(self.dist_min, self.dist_max);
-    }
-
-    /// Compute view matrix looking at ⁠ target ⁠.
-    pub fn view_matrix(&self, target: Vec3) -> Mat4 {
-        let eye = Vec3::new(
-            target.x + self.dist * self.pitch.cos() * self.yaw.sin(),
-            target.y + self.dist * self.pitch.sin(),
-            target.z + self.dist * self.pitch.cos() * self.yaw.cos(),
+    pub fn new(eye: Vector3, target: Vector3, up: Vector3) -> Self {
+        // Calculate initial yaw and pitch from eye and target
+        let direction = Vector3::new(
+            eye.x - target.x,
+            eye.y - target.y,
+            eye.z - target.z,
         );
-        let up = Vec3::new(0.0, 1.0, 0.0);
-        glm::look_at(&eye, &target, &up)
+
+        let distance = (direction.x * direction.x + direction.y * direction.y + direction.z * direction.z).sqrt();
+        let pitch = (direction.y / distance).asin();
+        let yaw = direction.z.atan2(direction.x);
+
+        Camera {
+            eye,
+            target,
+            up,
+            yaw,
+            pitch,
+            distance,
+            rotation_speed: 0.05,
+            zoom_speed: 0.5,
+            pan_speed: 0.1,
+        }
     }
 
-    /// Return (yaw, pitch) for skybox drawing etc.
-    #[inline] pub fn angles(&self) -> (f32, f32) { (self.yaw, self.pitch) }
+    /// Update camera eye position based on yaw, pitch, and distance
+    fn update_eye_position(&mut self) {
+        // Clamp pitch to avoid gimbal lock
+        self.pitch = self.pitch.clamp(-PI / 2.0 + 0.1, PI / 2.0 - 0.1);
 
-    /// Reset mouse accumulator (call when switching inspect target)
-    #[inline] pub fn reset_mouse(&mut self) { self.last_mouse = None; }
+        // Calculate camera position using spherical coordinates
+        // x = distance * cos(pitch) * cos(yaw)
+        // y = distance * sin(pitch)
+        // z = distance * cos(pitch) * sin(yaw)
+        self.eye.x = self.target.x + self.distance * self.pitch.cos() * self.yaw.cos();
+        self.eye.y = self.target.y + self.distance * self.pitch.sin();
+        self.eye.z = self.target.z + self.distance * self.pitch.cos() * self.yaw.sin();
+    }
 
-    /// Return the current camera distance from target.
-    #[inline]
-    pub fn distance(&self) -> f32 { self.dist }
+    /// Get the view matrix for this camera
+    pub fn get_view_matrix(&self) -> Matrix {
+        create_view_matrix(self.eye, self.target, self.up)
+    }
 
-    /// Compute and return the eye/world position given a target.
-    pub fn eye(&self, target: Vec3) -> Vec3 {
-        Vec3::new(
-            target.x + self.dist * self.pitch.cos() * self.yaw.sin(),
-            target.y + self.dist * self.pitch.sin(),
-            target.z + self.dist * self.pitch.cos() * self.yaw.cos(),
-        )
+    /// Process keyboard input to control the camera
+    pub fn process_input(&mut self, window: &RaylibHandle) {
+        // Rotation controls (yaw)
+        if window.is_key_down(KeyboardKey::KEY_A) {
+            self.yaw += self.rotation_speed;
+            self.update_eye_position();
+        }
+        if window.is_key_down(KeyboardKey::KEY_D) {
+            self.yaw -= self.rotation_speed;
+            self.update_eye_position();
+        }
+
+        // Rotation controls (pitch)
+        if window.is_key_down(KeyboardKey::KEY_W) {
+            self.pitch += self.rotation_speed;
+            self.update_eye_position();
+        }
+        if window.is_key_down(KeyboardKey::KEY_S) {
+            self.pitch -= self.rotation_speed;
+            self.update_eye_position();
+        }
+
+        // Zoom controls (distance from target) - arrow keys
+        if window.is_key_down(KeyboardKey::KEY_UP) {
+            self.distance -= self.zoom_speed;
+            if self.distance < 0.5 {
+                self.distance = 0.5; // Prevent camera from going too close
+            }
+            self.update_eye_position();
+        }
+        if window.is_key_down(KeyboardKey::KEY_DOWN) {
+            self.distance += self.zoom_speed;
+            self.update_eye_position();
+        }
+
+        // Pan controls (move target/center point)
+        // Calculate right and forward vectors for panning
+        let forward = Vector3::new(
+            self.target.x - self.eye.x,
+            0.0, // Keep on horizontal plane
+            self.target.z - self.eye.z,
+        );
+        let forward_len = (forward.x * forward.x + forward.z * forward.z).sqrt();
+        let forward_normalized = if forward_len > 0.0 {
+            Vector3::new(forward.x / forward_len, 0.0, forward.z / forward_len)
+        } else {
+            Vector3::new(0.0, 0.0, 1.0)
+        };
+
+        let right = Vector3::new(
+            forward_normalized.z,
+            0.0,
+            -forward_normalized.x,
+        );
+
+        // Q/E keys for horizontal panning
+        if window.is_key_down(KeyboardKey::KEY_Q) {
+            self.target.x -= right.x * self.pan_speed;
+            self.target.z -= right.z * self.pan_speed;
+            self.update_eye_position();
+        }
+        if window.is_key_down(KeyboardKey::KEY_E) {
+            self.target.x += right.x * self.pan_speed;
+            self.target.z += right.z * self.pan_speed;
+            self.update_eye_position();
+        }
+
+        // Left/Right arrow keys for horizontal panning
+        if window.is_key_down(KeyboardKey::KEY_LEFT) {
+            self.target.x -= right.x * self.pan_speed;
+            self.target.z -= right.z * self.pan_speed;
+            self.update_eye_position();
+        }
+        if window.is_key_down(KeyboardKey::KEY_RIGHT) {
+            self.target.x += right.x * self.pan_speed;
+            self.target.z += right.z * self.pan_speed;
+            self.update_eye_position();
+        }
+
+        // Vertical panning
+        if window.is_key_down(KeyboardKey::KEY_R) {
+            self.target.y += self.pan_speed;
+            self.update_eye_position();
+        }
+        if window.is_key_down(KeyboardKey::KEY_F) {
+            self.target.y -= self.pan_speed;
+            self.update_eye_position();
+        }
     }
 }
