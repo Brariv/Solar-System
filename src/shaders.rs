@@ -76,10 +76,10 @@ fn transform_normal(normal: &Vector3, model_matrix: &Matrix) -> Vector3 {
     transformed_normal
 }
 
-pub fn fragment_shader(fragment: &Fragment, _uniforms: &Uniforms) -> Vector3 {
-    // Default fragment shader: just use the interpolated vertex color.
-    fragment.color
-}
+// pub fn fragment_shader(fragment: &Fragment, _uniforms: &Uniforms) -> Vector3 {
+//     // Default fragment shader: just use the interpolated vertex color.
+//     fragment.color
+// }
 
 // ------------------------
 // Helper functions for fragment shaders

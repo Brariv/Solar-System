@@ -1,5 +1,10 @@
 # Solar System Renderer
 
+## Cherry Way Galaxy
+A computer graphics project that renders a solar system scene with various planets and a shuttle using a custom shader pipeline. The project features a skybox, dynamic lighting, and detailed models of planets and a shuttle.
+![Cherry Way Galaxy rendering](images/CherryWayGalaxy.png)
+*Figure: Cherry Way Galaxy rendering.*
+
 ## Planets
 1. **Rocky Planet 1**
    - A terrestrial planet with a mix of snow and lava surfaces.
@@ -20,10 +25,11 @@
 
 ![Planets 1 rendering](images/Planets1.png)
 ![Planets 2 rendering](images/Planets2.png)
+*Figure: Planets rendering.*
 
 ## The Centurion Shuttle
 ![Centurion Shuttle rendering](images/TheCenturionShuttle1.png)
 
 ![Centurion Shuttle rendering front](images/TheCenturionShuttle2.png)
 
-*Figure: The Centurion Shuttle — rendered with the project's shader pipeline.*
+*Figure: The Centurion Shuttle.*

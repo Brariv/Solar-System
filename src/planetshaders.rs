@@ -277,7 +277,6 @@ pub fn rocky_planet_vertex_shader(v: &mut Vertex) {
     // Colores base de la roca estilo cartoon
     let plate_light = Vector3::new(0.96, 0.78, 0.54); // beige anaranjado claro
     let plate_mid   = Vector3::new(0.88, 0.65, 0.42); // naranja suave
-    let plate_dark  = Vector3::new(0.60, 0.37, 0.22); // marrón rojizo
     let gap_color   = Vector3::new(0.22, 0.10, 0.08); // color entre placas (grieta oscura)
 
     // Variación de color por placa usando ruido basado en la celda

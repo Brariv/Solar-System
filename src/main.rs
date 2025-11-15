@@ -38,8 +38,7 @@ struct SceneObject {
     object_type: String,
     translation: Vector3,
     rotation: Vector3,
-    scale: f32,
-    color: Vector3,
+    scale: f32
 }
 
 fn render(
@@ -47,7 +46,7 @@ fn render(
     uniforms: &Uniforms,
     vertex_array: &[Vertex],
     light: &Light,
-    object_type: &str,
+    object_type: &str
 ) {
     // Build an object-specific model matrix and compose a per-object Uniforms
     //let model_matrix = create_model_matrix(translation, scale, rotation);
@@ -100,22 +99,6 @@ fn render(
     for tri in &triangles {
         fragments.extend(triangle(&tri[0], &tri[1], &tri[2], light));
     }
-
-    // Compute smooth per-fragment shading using the fragment shader.
-    // This uses the interpolated normals stored in each fragment to produce smooth (Phong-like) lighting.
-    
-
-    
-
-    // // Fragment Processing Stage
-    // for fragment in fragments {
-    //     framebuffer.point(
-    //         fragment.position.x as i32,
-    //         fragment.position.y as i32,
-    //         fragment.color,
-    //         fragment.depth,
-    //     );
-    // }
 
     // Fragment Processing Stage
     for fragment in fragments {
@@ -220,58 +203,47 @@ fn main() {
         object_type: "shuttle".to_string(),
         translation: Vector3::new(0.0, 0.0, 70.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.0,
-        color: Vector3::new(181.0 / 255.0, 220.0 / 255.0, 185.0 / 255.0),
+        scale: 1.0
     };
 
     let planet_gassy_1 = SceneObject {
         vertices: planet_obj.get_vertex_array(),
         object_type: "gassy1".to_string(),
-        // Gas giant to the right of the origin
         translation: Vector3::new(18.0, 0.0, -20.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.8,
-        color: Vector3::new(102.0 / 255.0, 187.0 / 255.0, 255.0 / 255.0),
+        scale: 1.8
     };
 
     let ring = SceneObject {
         vertices: ring_obj.get_vertex_array(),
         object_type: "ring".to_string(),
-        // Ring centered on the gas giant
         translation: Vector3::new(18.0, 0.0, -20.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.8,
-        color: Vector3::new(204.0 / 255.0, 204.0 / 255.0, 204.0 / 255.0),
+        scale: 1.8
     };
 
     let planet_gassy_2 = SceneObject {
         vertices: planet_obj.get_vertex_array(),
         object_type: "gassy2".to_string(),
-        // Gas giant to the right of the origin
         translation: Vector3::new(28.0, 0.0, 5.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 0.8,
-        color: Vector3::new(102.0 / 255.0, 187.0 / 255.0, 255.0 / 255.0),
+        scale: 0.8
     };
 
     let planet_gassy_3 = SceneObject {
         vertices: planet_obj.get_vertex_array(),
         object_type: "gassy3".to_string(),
-        // Gas giant to the right of the origin
         translation: Vector3::new(0.0, 0.0, 40.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.0,
-        color: Vector3::new(102.0 / 255.0, 187.0 / 255.0, 255.0 / 255.0),
+        scale: 1.0
     };
 
     let planet_rocky_1 = SceneObject {
         vertices: planet_obj.get_vertex_array(),
         object_type: "rocky1".to_string(),
-        // Rocky planet to the left of the origin
         translation: Vector3::new(-16.0, 0.0, 0.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.2,
-        color: Vector3::new(102.0 / 255.0, 187.0 / 255.0, 255.0 / 255.0),
+        scale: 1.2
     };
 
     let planet_rocky_2 = SceneObject {
@@ -280,43 +252,32 @@ fn main() {
         // Rocky planet to the left of the origin
         translation: Vector3::new(-50.0, 0.0, 22.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.0,
-        color: Vector3::new(102.0 / 255.0, 187.0 / 255.0, 255.0 / 255.0),
+        scale: 1.0
     };
 
     let earth = SceneObject {
         vertices: planet_obj.get_vertex_array(),
         object_type: "earth".to_string(),
-        // Earth in front of the origin (slightly towards the camera)
         translation: Vector3::new(10.0, 0.0, -27.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
-        scale: 1.2,
-        color: Vector3::new(102.0 / 255.0, 187.0 / 255.0, 255.0 / 255.0),
+        scale: 1.2
     };
 
-    
-
-
-    
 
     let moon = SceneObject {
         vertices: planet_obj.get_vertex_array(),
         object_type: "moon".to_string(),
-        // Small moon offset from Earth
         translation: Vector3::new(15.0, -2.0, -60.0),
         rotation: Vector3::new(0.0, 0.0, 0.0),
         scale: 0.5,
-        color: Vector3::new(170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0),
     };
 
     let sun = SceneObject {
         vertices: sun_obj.get_vertex_array(),
         object_type: "sun".to_string(),
-        // Sun at the origin (also matches the light position)
         translation: light.position,
         rotation: Vector3::new(0.0, 0.0, 0.0),
         scale: 2.5,
-        color: Vector3::new(255.0 / 255.0, 255.0 / 255.0, 102.0 / 255.0), // Amarillo brillante
     };
 
     let mut scene_objects = vec![
@@ -329,7 +290,7 @@ fn main() {
         moon,
         ring,
         sun,
-        shuttle, // descomenta si quieres ver el shuttle también
+        shuttle, 
     ];
 
 
@@ -338,9 +299,6 @@ fn main() {
         // Process camera input
         camera.process_input(&window);
 
-        // Make the shuttle follow the camera:
-        // we try to position it slightly in front of and below the camera
-        // so it looks like a third-person ship following the view.
         if let Some(shuttle_obj) = scene_objects.iter_mut().find(|o| o.object_type == "shuttle") {
             // Camera eye (position) and target define the viewing direction
             let cam_pos = camera.eye;
@@ -359,28 +317,15 @@ fn main() {
                 Vector3::new(0.0, 0.0, -1.0)
             };
 
-            // Distance in front of camera and small vertical offset (below center of view)
+            // Position the shuttle in front of the camera
             let distance_ahead = 5.0;
             let vertical_offset = -1.0;
 
-            // Position the shuttle in front of the camera
             shuttle_obj.translation = Vector3::new(
                 cam_pos.x + forward_dir.x * distance_ahead,
                 cam_pos.y + forward_dir.y * distance_ahead + vertical_offset,
                 cam_pos.z + forward_dir.z * distance_ahead,
             );
-
-            // Sync shuttle orientation with camera direction (3rd-person style)
-            // // Yaw: rotation around Y so the nose points along the forward direction in XZ
-            // let yaw = forward_dir.x.atan2(forward_dir.z);
-            // // Pitch: rotation around X so the shuttle tilts up/down with the camera
-            // let pitch = (forward_dir.y).asin();
-
-            // shuttle_obj.rotation = Vector3::new(
-            //     pitch, // rotate around X for up/down
-            //     yaw,   // rotate around Y for left/right
-            //     0.0,
-            // );
         }
 
         // Update model rotation
@@ -389,9 +334,6 @@ fn main() {
         // Clear framebuffer (color + depth) at the start of the frame
         framebuffer.clear();
 
-        // Simple skybox: elegimos qué cara dibujar según hacia dónde ve la cámara
-        // (no es un cubemap perfecto, pero sí reacciona a la rotación de la cámara).
-        // Skybox como cubemap completo: para cada píxel calculamos un rayo y sampleamos las 6 caras.
         let cam_pos = camera.eye;
         let cam_target = camera.target;
 
