@@ -5,6 +5,9 @@ A computer graphics project that renders a solar system scene with various plane
 ![Cherry Way Galaxy rendering](images/CherryWayGalaxy.png)
 *Figure: Cherry Way Galaxy rendering.*
 
+## YouTube Video
+[Watch the video](https://youtu.be/-O6avoLTh8c)
+
 ## Planets
 1. **Rocky Planet 1**
    - A terrestrial planet with a mix of snow and lava surfaces.

@@ -24,6 +24,8 @@ use std::thread;
 use std::time::Duration;
 use std::f32::consts::PI;
 use crate::planetshaders::*;
+use std::fs::File;
+use std::io::BufReader;
 use crate::skybox::{SkyboxFace, Skybox, image_to_colors, sample_cubemap};
 
 pub struct Uniforms {
@@ -193,10 +195,10 @@ fn main() {
         back:   load_skybox_face("assets/skybox/back.png"),
     };
 
-    let shuttle_obj = Obj::load("assets/SpaceShuttle.obj").expect("Failed to load obj");
-    let planet_obj = Obj::load("assets/sphere.obj").expect("Failed to load obj");
-    let sun_obj = Obj::load("assets/sun.obj").expect("Failed to load obj");
-    let ring_obj = Obj::load("assets/ring.obj").expect("Failed to load obj");
+    let shuttle_obj = Obj::load("assets/objects/SpaceShuttle.obj").expect("Failed to load obj");
+    let planet_obj = Obj::load("assets/objects/sphere.obj").expect("Failed to load obj");
+    let sun_obj = Obj::load("assets/objects/sun.obj").expect("Failed to load obj");
+    let ring_obj = Obj::load("assets/objects/ring.obj").expect("Failed to load obj");
     
     let shuttle = SceneObject {
         vertices: shuttle_obj.get_vertex_array(),
@@ -294,6 +296,11 @@ fn main() {
     ];
 
 
+    let stream_handle = rodio::OutputStreamBuilder::open_default_stream()
+        .expect("open default audio stream");
+
+    let file = BufReader::new(File::open("assets/music/cherry_galaxy_remix.mp3").unwrap());
+    let sink = rodio::play(&stream_handle.mixer(), file).unwrap();
 
     while !window.window_should_close() {
         // Process camera input
