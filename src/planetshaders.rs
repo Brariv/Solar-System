@@ -523,3 +523,83 @@ pub fn earth_planet_vertex_shader(v: &mut Vertex){
     v.color = saturate_vec3(final_color);
 }
 
+
+// 🚀 Shuttle shader: mint hull with dark accents and light-grey panels
+pub fn shuttle_vertex_shader(v: &mut Vertex) {
+    let n = normalize3(v.normal);
+    let uv = spherical_uv(n);
+
+    // Palette (converted from hex):
+    // #b3deb8 (mint), #231f20 (almost black), #d1d3d8 (light grey)
+    let mint = Vector3::new(0.702, 0.871, 0.722);
+    let dark = Vector3::new(0.137, 0.125, 0.126);
+    let light = Vector3::new(0.819, 0.827, 0.847);
+
+    // ------------------------
+    // Capa 1: casco base color menta
+    // ------------------------
+    let mut color = mint;
+
+    // ------------------------
+    // Capa 2: paneles del casco (rectángulos suaves)
+    // ------------------------
+    // Usamos un grid sobre uv para simular paneles
+    let grid = Vector2::new(uv.x * 10.0, uv.y * 4.0);
+    let cell = Vector2::new(grid.x.floor(), grid.y.floor());
+    let local = Vector2::new(grid.x.fract(), grid.y.fract());
+
+    // Distancia al borde de la celda (para panel outlines)
+    let edge_dist = local.x
+        .min(local.y)
+        .min(1.0 - local.x)
+        .min(1.0 - local.y);
+    let edge = smoothstep(0.08, 0.02, edge_dist); // 1 cerca del borde, 0 en el centro
+
+    // Color base de panel (mint mezclado con grey)
+    let panel_color = mix_vec3(mint, light, 0.35);
+    color = mix_vec3(color, panel_color, 0.8);
+
+    // Borde más oscuro de los paneles
+    let edge_color = mix_vec3(light, dark, 0.6);
+    color = mix_vec3(color, edge_color, edge * 0.9);
+
+    // ------------------------
+    // Capa 3: franja oscura en la panza y la nariz
+    // ------------------------
+    // Panza: parte con normal hacia abajo
+    let underside = clamp(-n.y * 0.7 + 0.3, 0.0, 1.0);
+    // Nariz: área delantera (suponiendo eje Z como frente)
+    let nose = clamp((n.z - 0.1) * 1.8, 0.0, 1.0);
+    let hull_shadow = underside.max(nose);
+
+    color = mix_vec3(color, dark, hull_shadow * 0.7);
+
+    // ------------------------
+    // Capa 4: "ventanas" o detalles oscuros
+    // ------------------------
+    let window_seed = hash2(cell);
+
+    if window_seed > 0.55 && underside < 0.4 {
+        // Posición pseudo-aleatoria de una ventana en la celda
+        let w_cx = 0.25 + hash2(Vector2::new(cell.x + 13.0, cell.y + 5.0)) * 0.5;
+        let w_cy = 0.35 + hash2(Vector2::new(cell.x + 31.0, cell.y + 9.0)) * 0.25;
+
+        let dx = local.x - w_cx;
+        let dy = local.y - w_cy;
+        let wdist = dx.abs().max(dy.abs()); // ventana rectangular
+
+        let win_mask = smoothstep(0.13, 0.07, wdist);
+        let window_color = mix_vec3(dark, light, 0.2); // vidrio oscuro
+
+        color = mix_vec3(color, window_color, win_mask);
+    }
+
+    // ------------------------
+    // Capa 5: sombreado por facing (ligero)
+    // ------------------------
+    let facing = clamp(n.z * 0.5 + 0.5, 0.0, 1.0);
+    let brightness = mix(0.85, 1.10, facing);
+    color = Vector3::new(color.x * brightness, color.y * brightness, color.z * brightness);
+
+    v.color = saturate_vec3(color);
+}

@@ -67,6 +67,7 @@ impl Framebuffer {
     }
 
     pub fn swap_buffers(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        let fps = rl.get_fps();
         if let Some(texture) = &mut self.texture {
             let colors = self.image.get_image_data();
             // Safely cast the &[Color] slice to a &[u8] slice for the update function
@@ -81,6 +82,7 @@ impl Framebuffer {
             let mut d = rl.begin_drawing(thread);
             d.clear_background(Color::BLACK);
             d.draw_texture(texture, 0, 0, Color::WHITE);
+            d.draw_text(&format!("FPS: {}", fps), 10, 10, 20, Color::PURPLE);
         } else {
             panic!("Framebuffer texture has not been initialized. Call init_texture after creating the RaylibHandle.");
         }

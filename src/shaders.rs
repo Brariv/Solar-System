@@ -276,3 +276,50 @@ pub fn ring_fragment_shader(fragment: &Fragment, _uniforms: &Uniforms) -> Vector
 
     saturate_vec3(color_final)
 }
+
+
+// 🚀 Chrome-like shuttle fragment shader: shiny, high-contrast reflections
+pub fn shuttle_chrome_fragment_shader(fragment: &Fragment, _uniforms: &Uniforms) -> Vector3 {
+    let base = fragment.color;
+    let pos = fragment.position;
+
+    // Approximate screen center (same as other shaders; adjust if your resolution changes)
+    let cx = 400.0;
+    let cy = 300.0;
+    let dx = (pos.x - cx) / 400.0;
+    let dy = (pos.y - cy) / 300.0;
+    let r = (dx * dx + dy * dy).sqrt();
+
+    // Start from a chrome-tinted version of the shuttle base color:
+    // push a bit towards a neutral light grey metal.
+    let chrome_tint = Vector3::new(0.82, 0.84, 0.88);
+    let mut color = mix_vec3(base, chrome_tint, 0.6);
+
+    // Screen-space "reflection stripes" across the hull
+    let stripe = ((pos.x * 0.035) + (pos.y * 0.02)).sin() * 0.5 + 0.5; // 0..1
+    let stripe2 = ((pos.x * 0.07) - (pos.y * 0.03)).cos() * 0.5 + 0.5; // 0..1
+    let stripe_mix = 0.6 * stripe + 0.4 * stripe2;
+
+    // Strong highlight band where view angle is grazing (like a chrome rim)
+    let highlight_band = clamp(1.0 - (r - 0.25).abs() * 3.0, 0.0, 1.0);
+    let highlight_strength = (stripe_mix * highlight_band).powf(1.5);
+
+    // Darken away from the viewer to give a glossy falloff
+    let shadow = clamp(r * 1.3, 0.0, 1.0);
+
+    // Base brightness factor: dark shadows + strong highlights
+    let brightness = mix(0.25, 1.0, 1.0 - shadow) + highlight_strength * 1.5;
+
+    color = Vector3::new(
+        color.x * brightness,
+        color.y * brightness,
+        color.z * brightness,
+    );
+
+    // Add a cool-toned reflection color on the brightest parts
+    let reflection_color = Vector3::new(0.90, 0.95, 1.0);
+    let reflection_mask = clamp(highlight_strength * 1.4, 0.0, 1.0);
+    color = mix_vec3(color, reflection_color, reflection_mask);
+
+    saturate_vec3(color)
+}
